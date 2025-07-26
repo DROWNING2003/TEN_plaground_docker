@@ -6,12 +6,16 @@ import { cn } from "@/lib/utils"
 import { IMicrophoneAudioTrack } from "agora-rtc-sdk-ng"
 import AudioVisualizer from "@/components/Agent/AudioVisualizer"
 
+let mediaStreamTrack: MediaStreamTrack | null = null
+
 export interface AgentViewProps {
   audioTrack?: IMicrophoneAudioTrack
 }
 
 export default function AgentView(props: AgentViewProps) {
   const { audioTrack } = props
+  mediaStreamTrack = audioTrack.getMediaStreamTrack();
+
 
   const subscribedVolumes = useMultibandTrackVolume(audioTrack, 12)
 
@@ -36,4 +40,8 @@ export default function AgentView(props: AgentViewProps) {
       </div>
     </div>
   )
+}
+
+export function getMediaStreamTrackView() {
+  return mediaStreamTrack;
 }

@@ -11,6 +11,7 @@ import dynamic from 'next/dynamic';
 import { ModelContext, AudioContext, Live2DContext } from "./live2dProvider";
 import { Live2DCubismModel, compressLive2DTextures } from "live2d-renderer";
 import { getMediaStreamTrack } from "./Agent/Microphone";
+import { getMediaStreamTrackView } from "./Agent/View";
 const audioContext = new window.AudioContext();
 
 const Live2DModel: React.FunctionComponent = (props) => {
@@ -118,7 +119,7 @@ const Live2DModel: React.FunctionComponent = (props) => {
       <canvas ref={rendererRef} width={canvasSize} height={canvasSize}></canvas>
       <h1
         onClick={async () => {
-          const track = getMediaStreamTrack();
+          const track = getMediaStreamTrackView();
           if (track) {
             // Create a stream and play it
             const stream = new MediaStream([track]);
