@@ -7,8 +7,6 @@ import { IMicrophoneAudioTrack } from "agora-rtc-sdk-ng"
 import AudioVisualizer from "@/components/Agent/AudioVisualizer"
 import React from "react"
 
-const [mediaStreamTrack, setMediaStreamTrack] =
-    React.useState<MediaStreamTrack>()
 
 let mediaStreamTrack1: MediaStreamTrack | null = null
 
@@ -18,6 +16,8 @@ export interface AgentViewProps {
 
 export default function AgentView(props: AgentViewProps) {
   const { audioTrack } = props
+  const [mediaStreamTrack, setMediaStreamTrack] =
+    React.useState<MediaStreamTrack>()
   React.useEffect(() => {
     audioTrack?.on("track-updated", onAudioTrackupdated)
     if (audioTrack) {
