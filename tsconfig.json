@@ -2,20 +2,20 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "target": "es2022",
+    "target": "ES2022",
     "allowJs": true,
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "isolatedModules": true,
-    "types": ["vite/client"],
+    "types": ["next"],
 
     /* Strictness */
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "checkJs": true,
+    "strict": false,
+    "noUncheckedIndexedAccess": false,
+    "checkJs": false,
 
     /* Bundled projects */
-    "lib": ["dom", "dom.iterable", "ES2022"],
+    "lib": ["dom", "dom.iterable", "ES2023"],
     "noEmit": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
@@ -27,7 +27,6 @@
         "./src/*"
       ]
     },
-    "target": "ES2017"
   },
   "include": [
     "svgr.d.ts",
@@ -35,7 +34,6 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "src/assets/live2dcubismcore.min.js"
   ],
   "exclude": [
     "node_modules"

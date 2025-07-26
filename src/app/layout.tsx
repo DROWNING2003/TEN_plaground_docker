@@ -2,6 +2,7 @@
 import { StoreProvider } from "@/store"
 import type { Metadata, Viewport } from "next"
 import { Toaster } from "@/components/ui/sonner"
+export const dynamic = 'force-dynamic'; 
 
 import "./global.css"
 

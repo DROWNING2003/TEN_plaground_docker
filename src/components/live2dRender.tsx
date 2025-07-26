@@ -1,4 +1,5 @@
 // export default Live2DModel
+"use client"
 import React, {
   useEffect,
   useRef,
@@ -6,6 +7,7 @@ import React, {
   useContext,
   useReducer,
 } from "react";
+import dynamic from 'next/dynamic';
 import { ModelContext, AudioContext, Live2DContext } from "./live2dProvider";
 import { Live2DCubismModel, compressLive2DTextures } from "live2d-renderer";
 import { getMediaStreamTrack } from "./Agent/Microphone";
@@ -165,7 +167,7 @@ const Live2DModel: React.FunctionComponent = (props) => {
               }
 
               // 3. Encode as WAV (MP3 requires libraries like lamejs)
-              const wavBuffer = encodeWAV(smoothedData1, 44100);
+              const wavBuffer = encodeWAV(smoothedData1);
 
               // 4. Send to Live2D
               if (live2D) {
