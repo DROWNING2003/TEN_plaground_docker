@@ -14,6 +14,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { MicIconByStatus } from "@/components/Icon"
 
+let mediaStreamTrack1: MediaStreamTrack | null = null
+
 export default function MicrophoneBlock(props: {
   audioTrack?: IMicrophoneAudioTrack
 }) {
@@ -26,10 +28,12 @@ export default function MicrophoneBlock(props: {
     audioTrack?.on("track-updated", onAudioTrackupdated)
     if (audioTrack) {
       setMediaStreamTrack(audioTrack.getMediaStreamTrack())
+      mediaStreamTrack1 = audioTrack.getMediaStreamTrack();
     }
 
     return () => {
       audioTrack?.off("track-updated", onAudioTrackupdated)
+      mediaStreamTrack1 = null
     }
   }, [audioTrack])
 
@@ -69,6 +73,10 @@ export default function MicrophoneBlock(props: {
       </div>
     </CommonDeviceWrapper>
   )
+}
+
+export function getMediaStreamTrack() {
+  return mediaStreamTrack1;
 }
 
 export function CommonDeviceWrapper(props: {
@@ -177,3 +185,5 @@ export const MicrophoneSelect = (props: {
 
   return <DeviceSelect items={items} value={value} onChange={onChange} />
 }
+
+

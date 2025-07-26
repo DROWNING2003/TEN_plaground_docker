@@ -11,6 +11,7 @@ import Avatar from "@/components/Agent/AvatarTrulience";
 import React from "react";
 import { IRtcUser, IUserTracks } from "@/manager";
 import { IMicrophoneAudioTrack } from "agora-rtc-sdk-ng";
+import Live2dProvider from "@/components/live2dProvider";
 
 const DynamicRTCCard = dynamic(() => import("@/components/Dynamic/RTCCard"), {
   ssr: false,
@@ -68,14 +69,13 @@ export default function Home() {
           />
 
           {(!useTrulienceAvatar || isCompactLayout || !avatarInLargeWindow) && (
-            <DynamicChatCard
+            <><DynamicChatCard
               className={cn(
                 "m-0 w-full rounded-b-lg bg-[#181a1d] md:rounded-lg flex-auto",
                 {
                   ["hidden md:flex"]: mobileActiveTab === EMobileActiveTab.AGENT,
                 }
-              )}
-            />
+              )} /><Live2dProvider /></>
           )}
 
           {(useTrulienceAvatar && avatarInLargeWindow) && (
