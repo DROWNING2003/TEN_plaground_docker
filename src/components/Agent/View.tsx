@@ -7,7 +7,10 @@ import { IMicrophoneAudioTrack } from "agora-rtc-sdk-ng"
 import AudioVisualizer from "@/components/Agent/AudioVisualizer"
 import React from "react"
 
-let mediaStreamTrack: MediaStreamTrack | null = null
+const [mediaStreamTrack, setMediaStreamTrack] =
+    React.useState<MediaStreamTrack>()
+
+let mediaStreamTrack1: MediaStreamTrack | null = null
 
 export interface AgentViewProps {
   audioTrack?: IMicrophoneAudioTrack
@@ -16,17 +19,23 @@ export interface AgentViewProps {
 export default function AgentView(props: AgentViewProps) {
   const { audioTrack } = props
   React.useEffect(() => {
-    //audioTrack?.on("track-updated", onAudioTrackupdated)
+    audioTrack?.on("track-updated", onAudioTrackupdated)
     if (audioTrack) {
-      //setMediaStreamTrack(audioTrack.getMediaStreamTrack())
-      mediaStreamTrack = audioTrack.getMediaStreamTrack();
+      setMediaStreamTrack(audioTrack.getMediaStreamTrack())
+      mediaStreamTrack1 = audioTrack.getMediaStreamTrack();
     }
 
     return () => {
-      //audioTrack?.off("track-updated", onAudioTrackupdated)
-      mediaStreamTrack = null
+      audioTrack?.off("track-updated", onAudioTrackupdated)
+      mediaStreamTrack1 = null
     }
   }, [audioTrack])
+
+
+  const onAudioTrackupdated = (track: MediaStreamTrack) => {
+    console.log("[test] audio track updated", track)
+    setMediaStreamTrack(track)
+  }
 
 
   //mediaStreamTrack = audioTrack.getMediaStreamTrack();
@@ -58,5 +67,10 @@ export default function AgentView(props: AgentViewProps) {
 }
 
 export function getMediaStreamTrackView() {
-  return mediaStreamTrack;
+  if(mediaStreamTrack){
+    return mediaStreamTrack;
+  }else{
+    return;
+  }
+
 }

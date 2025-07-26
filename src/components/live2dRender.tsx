@@ -123,17 +123,17 @@ const Live2DModel: React.FunctionComponent = (props) => {
           if (track) {
             // Create a stream and play it
             const stream = new MediaStream([track]);
-            const audio = new Audio();
-            audio.srcObject = stream;
-            audio.play().catch((e) => console.error("Playback failed:", e));
+            //const audio = new Audio();
+            //audio.srcObject = stream;
+            //audio.play().catch((e) => console.error("Playback failed:", e));
 
             const audioContext = new window.AudioContext();
             const processor = audioContext.createScriptProcessor(4096, 1, 1);
             const source = audioContext.createMediaStreamSource(stream);
 
-            let tempBuffer = new Float32Array(0);
-            const sampleRate = audioContext.sampleRate;
-            const samplesPer10ms = Math.floor(sampleRate * 0.01);
+            // let tempBuffer = new Float32Array(0);
+            // const sampleRate = audioContext.sampleRate;
+            // const samplesPer10ms = Math.floor(sampleRate * 0.01);
 
             processor.onaudioprocess = async (e) => {
               // 1. Get raw PCM data (Float32Array)
