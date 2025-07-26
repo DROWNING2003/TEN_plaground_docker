@@ -1,5 +1,5 @@
 // export default Live2DModel
-"use client"
+"use client";
 import React, {
   useEffect,
   useRef,
@@ -7,7 +7,7 @@ import React, {
   useContext,
   useReducer,
 } from "react";
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 import { ModelContext, AudioContext, Live2DContext } from "./live2dProvider";
 import { Live2DCubismModel, compressLive2DTextures } from "live2d-renderer";
 import { getMediaStreamTrack } from "./Agent/Microphone";
@@ -138,6 +138,8 @@ const Live2DModel: React.FunctionComponent = (props) => {
             processor.onaudioprocess = async (e) => {
               // 1. Get raw PCM data (Float32Array)
               const pcmData = e.inputBuffer.getChannelData(0);
+              const sampleRate = e.inputBuffer.sampleRate; // Actual sample rate
+              const numChannels = e.inputBuffer.numberOfChannels; // Cha
 
               const maxSample = Math.max(...pcmData.map(Math.abs));
               const volumeBoost = maxSample > 0 ? 0.7 / maxSample : 1.0; // Auto-adjust gain
@@ -151,34 +153,46 @@ const Live2DModel: React.FunctionComponent = (props) => {
                 );
               }
 
-              // 2. Convert to 16-bit Int (WAV standard)
-              const int16Data = new Int16Array(smoothData.length);
-              for (let i = 0; i < pcmData.length; i++) {
-                int16Data[i] = Math.max(
-                  -32768,
-                  Math.min(32767, pcmData[i] * 32768)
-                );
-              }
+              //   // 2. Convert to 16-bit Int (WAV standard)
+              //   const int16Data = new Int16Array(smoothData.length);
+              //   for (let i = 0; i < pcmData.length; i++) {
+              //     int16Data[i] = Math.max(
+              //       -32768,
+              //       Math.min(32767, pcmData[i] * 32768)
+              //     );
+              //   }
 
-              const smoothedData1 = new Int16Array(int16Data.length);
-              smoothedData1[0] = int16Data[0];
-              for (let i = 1; i < int16Data.length; i++) {
+              const smoothedData1 = new Int16Array(smoothData.length);
+              smoothedData1[0] = smoothData[0];
+              for (let i = 1; i < smoothData.length; i++) {
+                const smoothingFactor = 0.5; // Adjust (0.1-0.5)
                 smoothedData1[i] =
-                  int16Data[i] * 0.3 + smoothedData1[i - 1] * 0.7;
+                  smoothData[i] * (1 - smoothingFactor) +
+                  smoothedData1[i - 1] * smoothingFactor;
               }
 
               // 3. Encode as WAV (MP3 requires libraries like lamejs)
-              const wavBuffer = encodeWAV(smoothedData1);
+              const wavBuffer = encodeWAV(
+                smoothData,
+                sampleRate, // Dynamic value
+                numChannels // Dynamic value
+              );
 
               // 4. Send to Live2D
               if (live2D) {
                 console.log("Sending WAV data to Live2D");
-                await live2D.inputAudio(wavBuffer);
+                await live2D
+                  .inputAudio(wavBuffer)
+                  .then(() => console.log("SENT", wavBuffer));
               }
             };
 
             // Helper: Convert Int16 PCM to WAV format
-            function encodeWAV(samples: Int16Array): ArrayBuffer {
+            function encodeWAV(
+              samples: Int16Array,
+              sampleRate: number, // Dynamic sample rate
+              numChannels: number
+            ): ArrayBuffer {
               const buffer = new ArrayBuffer(44 + samples.length * 2);
               const view = new DataView(buffer);
 
@@ -189,10 +203,15 @@ const Live2DModel: React.FunctionComponent = (props) => {
               writeString(view, 12, "fmt ");
               view.setUint32(16, 16, true); // chunk size
               view.setUint16(20, 1, true); // PCM format
-              view.setUint16(22, 1, true); // mono
-              view.setUint32(24, 44100, true); // sample rate
-              view.setUint32(28, 44100 * 2, true); // byte rate
-              view.setUint16(32, 2, true); // block align
+
+              view.setUint16(22, numChannels, true); // CHANGED: Dynamic channel count (1 for mono, 2 for stereo)
+              view.setUint32(24, sampleRate, true); // CHANGED: Dynamic sample rate (e.g., 44100, 48000)
+              view.setUint32(28, sampleRate * numChannels * 2, true); // CHANGED: Dynamic byte rate
+              view.setUint16(32, numChannels * 2, true);
+              //   view.setUint16(22, 1, true); // mono
+              //   view.setUint32(24, 44100, true); // sample rate
+              //   view.setUint32(28, 44100 * 2, true); // byte rate
+              //   view.setUint16(32, 2, true); // block align
               view.setUint16(34, 16, true); // bits per sample
               writeString(view, 36, "data");
               view.setUint32(40, samples.length * 2, true);
@@ -245,12 +264,12 @@ const Live2DModel: React.FunctionComponent = (props) => {
             processor.connect(audioContext.destination);
           }
 
-          const response = await fetch("/resources/recording.mp3"); // 替换为你的zip文件路径
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const arrayBuffer = await response.arrayBuffer();
-          console.log(arrayBuffer);
+          //   const response = await fetch("/resources/recording.mp3"); // 替换为你的zip文件路径
+          //   if (!response.ok) {
+          //     throw new Error(`HTTP error! status: ${response.status}`);
+          //   }
+          //   const arrayBuffer = await response.arrayBuffer();
+          //   console.log(arrayBuffer);
 
           //   const audioBuffer = await audioContext.decodeAudioData(
           //     arrayBuffer.slice(0)
