@@ -95,7 +95,7 @@ const Live2DModel: React.FunctionComponent = (props) => {
     if (!live2D) return;
     live2D.paused = paused;
     live2D.speed = speed;
-    live2D.zoomEnabled = enableZoom;
+    //live2D.zoomEnabled = enableZoom;
     forceUpdate();
   }, [live2D, paused, speed, enableZoom]);
 
@@ -116,16 +116,17 @@ const Live2DModel: React.FunctionComponent = (props) => {
           onMouseLeave={() => setControlHover(false)}
         ></div>
       ) : null}
-      <canvas ref={rendererRef} width={canvasSize} height={canvasSize}></canvas>
+      <canvas ref={rendererRef} width={canvasSize} height={canvasSize} ></canvas>
       <h1
         onClick={async () => {
           const track = getMediaStreamTrackView();
           if (track) {
             // Create a stream and play it
             const stream = new MediaStream([track]);
-            //const audio = new Audio();
-            //audio.srcObject = stream;
-            //audio.play().catch((e) => console.error("Playback failed:", e));
+            console.log("STREAM", stream);
+            const audio = new Audio();
+            audio.srcObject = stream;
+            audio.play().catch((e) => console.error("Playback failed:", e));
 
             const audioContext = new window.AudioContext();
             const processor = audioContext.createScriptProcessor(4096, 1, 1);
@@ -170,6 +171,7 @@ const Live2DModel: React.FunctionComponent = (props) => {
                   smoothData[i] * (1 - smoothingFactor) +
                   smoothedData1[i - 1] * smoothingFactor;
               }
+              console.log("SMOOTHDATA", smoothData);
 
               // 3. Encode as WAV (MP3 requires libraries like lamejs)
               const wavBuffer = encodeWAV(
@@ -177,12 +179,15 @@ const Live2DModel: React.FunctionComponent = (props) => {
                 sampleRate, // Dynamic value
                 numChannels // Dynamic value
               );
+              console.log("WAVBUFFER", wavBuffer);
+              const bufferToSend = wavBuffer.slice(0); // Creates a copy
+
 
               // 4. Send to Live2D
-              if (live2D) {
+              if (live2D && bufferToSend.byteLength>0) {
                 console.log("Sending WAV data to Live2D");
                 await live2D
-                  .inputAudio(wavBuffer)
+                  .inputAudio(bufferToSend)
                   .then(() => console.log("SENT", wavBuffer));
               }
             };
