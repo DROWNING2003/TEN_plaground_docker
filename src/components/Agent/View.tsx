@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 // import AudioVisualizer from "../audioVisualizer"
 import { IMicrophoneAudioTrack } from "agora-rtc-sdk-ng"
 import AudioVisualizer from "@/components/Agent/AudioVisualizer"
+import React from "react"
 
 let mediaStreamTrack: MediaStreamTrack | null = null
 
@@ -14,7 +15,21 @@ export interface AgentViewProps {
 
 export default function AgentView(props: AgentViewProps) {
   const { audioTrack } = props
-  mediaStreamTrack = audioTrack.getMediaStreamTrack();
+  React.useEffect(() => {
+    //audioTrack?.on("track-updated", onAudioTrackupdated)
+    if (audioTrack) {
+      //setMediaStreamTrack(audioTrack.getMediaStreamTrack())
+      mediaStreamTrack = audioTrack.getMediaStreamTrack();
+    }
+
+    return () => {
+      //audioTrack?.off("track-updated", onAudioTrackupdated)
+      mediaStreamTrack = null
+    }
+  }, [audioTrack])
+
+
+  //mediaStreamTrack = audioTrack.getMediaStreamTrack();
 
 
   const subscribedVolumes = useMultibandTrackVolume(audioTrack, 12)
