@@ -67,5 +67,5 @@ export default function AgentView(props: AgentViewProps) {
 }
 
 export function getMediaStreamTrackView() {
- mediaStreamTrack1;
+ return mediaStreamTrack1;
 }
