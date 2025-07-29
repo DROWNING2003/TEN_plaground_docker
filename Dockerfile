@@ -43,6 +43,8 @@ RUN addgroup --system --gid 1001 nodejs && \
 # 从构建阶段复制产出文件
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# 复制 public 目录（standalone 模式需要手动复制）
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 USER nextjs
 EXPOSE 3000

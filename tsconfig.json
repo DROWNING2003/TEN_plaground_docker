@@ -7,20 +7,28 @@
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "isolatedModules": true,
-    "types": ["next"],
-
+    "types": [
+      "next"
+    ],
     /* Strictness */
     "strict": false,
     "noUncheckedIndexedAccess": false,
     "checkJs": false,
-
     /* Bundled projects */
-    "lib": ["dom", "dom.iterable", "ES2023"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "ES2023"
+    ],
     "noEmit": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "preserve",
-    "plugins": [{ "name": "next" }],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "incremental": true,
     "paths": {
       "@/*": [
