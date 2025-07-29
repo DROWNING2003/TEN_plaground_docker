@@ -1,68 +1,51 @@
 # syntax=docker.io/docker/dockerfile:1
 
-FROM oven/bun:alpine AS base
+# 使用 Node.js 官方镜像（包含 npm）
+FROM node:20-alpine AS base
 
-# 1. Install dependencies only when needed
+# 全局安装 pnpm（版本需与 package.json 中的 "packageManager" 一致）
+RUN npm install -g pnpm@10.2.0
+
+# 1. 依赖安装阶段
 FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
-
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
+# 仅复制 lockfile 和 package.json（优化构建缓存）
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
-RUN pnpm run build
 
-# 2. Rebuild the source code only when needed
+# 2. 构建阶段
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line in case you want to disable telemetry during the build.
+# 禁用 Next.js 遥测
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN \
-  if [ -f yarn.lock ]; then corepack enable yarn && yarn run build; \
-  elif [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then npm install -g pnpm@10.2.0 && pnpm run build; \
-  elif [ -f bun.lockb ]; then bun run build; \
-  elif [ -f bun.lock ]; then bun run build; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+# 直接使用 pnpm 构建（无需条件判断）
+RUN pnpm run build
 
-# 3. Production image, copy all the files and run next
+# 3. 生产运行阶段
 FROM base AS runner
 WORKDIR /app
 
-# Uncomment the following line in case you want to disable telemetry during runtime.
 ENV NEXT_TELEMETRY_DISABLED=1
-
 ENV NODE_ENV=production
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# 创建非 root 用户
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs && \
+    mkdir -p .next/cache && \
+    chown nextjs:nodejs .next/cache
 
-# COPY --from=builder /app/public ./public
-
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
-
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
+# 从构建阶段复制产出文件
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
-
 EXPOSE 3000
-
 ENV PORT=3000
 
-# server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/next-config-js/output
-CMD HOSTNAME="0.0.0.0" node server.js
+CMD ["node", "server.js"]
