@@ -27,7 +27,8 @@ const Live2DModel: React.FunctionComponent = () => {
 
   const loop = async () => {
     live2D?.update();
-    live2D?.setParameter("ParamMouthOpenY", 1);
+    // 移除强制设置口型参数，让音频驱动的口型同步生效
+    // live2D?.setParameter("ParamMouthOpenY", 1);
     window.requestAnimationFrame(loop);
   };
 
@@ -66,6 +67,9 @@ const Live2DModel: React.FunctionComponent = () => {
       }
       const arrayBuffer = await response.arrayBuffer();
       await live2DModel.load(arrayBuffer);
+      // 设置口型同步参数
+      live2DModel.lipsyncSmoothing = 0.4;
+      console.log("Live2D model loaded successfully with lipsync enabled");
       setLive2D(live2DModel);
       loop();
     } catch (error) {
@@ -108,7 +112,7 @@ const Live2DModel: React.FunctionComponent = () => {
 
     const startLive2DAudio = async () => {
       console.log("Attempting to start Live2D audio");
-      
+
       const track = getMediaStreamTrackView();
       if (!track) {
         console.log("No audio track available yet, will retry when track becomes available");
@@ -116,6 +120,8 @@ const Live2DModel: React.FunctionComponent = () => {
       }
 
       console.log("Audio track found:", track);
+      console.log("Track state:", track.readyState);
+      console.log("Track settings:", track.getSettings());
 
       // Create a stream and play it
       const stream = new MediaStream([track]);
@@ -149,9 +155,19 @@ const Live2DModel: React.FunctionComponent = () => {
       processorNode.onaudioprocess = async (e) => {
         const inputBuffer = e.inputBuffer;
         const channelData = inputBuffer.getChannelData(0); // 获取单声道数据
+
+        // 计算音频强度用于调试
+        const maxAmplitude = Math.max(...channelData.map(Math.abs));
+        const avgAmplitude = channelData.reduce((sum, sample) => sum + Math.abs(sample), 0) / channelData.length;
+
         const isSilent = channelData.every(
-          (sample) => Math.abs(sample) < 0.0001
+          (sample) => Math.abs(sample) < 0.001
         );
+
+        if (!isSilent) {
+          console.log(`Audio detected - Max: ${maxAmplitude.toFixed(4)}, Avg: ${avgAmplitude.toFixed(4)}`);
+        }
+
         if (isSilent) {
           return; // Don't buffer or send anything
         }
@@ -173,7 +189,12 @@ const Live2DModel: React.FunctionComponent = () => {
           const wavBuffer = arrayBufferToWav(chunk, sampleRate);
 
           try {
-            await live2D.inputAudio(wavBuffer);
+            // 使用非阻塞方式发送音频数据
+            live2D.inputAudio(wavBuffer).then(() => {
+              console.log(`Audio chunk sent to Live2D - Size: ${wavBuffer.byteLength} bytes`);
+            }).catch((error) => {
+              console.error("Error sending audio to Live2D:", error);
+            });
           } catch (error) {
             console.error("Error sending audio to Live2D:", error);
           }
@@ -239,20 +260,36 @@ const Live2DModel: React.FunctionComponent = () => {
   // Separate effect to retry when audio track becomes available
   useEffect(() => {
     if (audioInitialized) return;
-    
+
     const track = getMediaStreamTrackView();
     if (track && live2D && audioContextRef.current) {
+      console.log("Retrying audio initialization with track:", track);
       setAudioInitialized(false); // Trigger the main audio effect
     }
+  }, [audioInitialized, live2D]);
+
+  // 添加定期检查音频轨道的机制
+  useEffect(() => {
+    if (audioInitialized || !live2D) return;
+
+    const checkAudioTrack = () => {
+      const track = getMediaStreamTrackView();
+      if (track && track.readyState === 'live') {
+        console.log("Audio track became available, initializing...");
+        setAudioInitialized(false);
+      }
+    };
+
+    const interval = setInterval(checkAudioTrack, 1000);
+    return () => clearInterval(interval);
   }, [audioInitialized, live2D]);
 
   return (
     <div className="live2d-model-container">
       {live2D ? (
         <div
-          className={`live2d-controls ${
-            controlHover ? "live2d-controls-visible" : ""
-          }`}
+          className={`live2d-controls ${controlHover ? "live2d-controls-visible" : ""
+            }`}
           onMouseEnter={() => setControlHover(true)}
           onMouseLeave={() => setControlHover(false)}
         ></div>
